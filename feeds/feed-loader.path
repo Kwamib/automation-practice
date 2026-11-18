@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch for supplier stock files arriving in /srv/feeds/incoming
+
+[Path]
+# Start feed-loader.service whenever a .csv file is in the folder. Files still
+# being uploaded should be named .part, and renamed when they're complete.
+PathExistsGlob=/srv/feeds/incoming/*.csv
+
+[Install]
+WantedBy=paths.target

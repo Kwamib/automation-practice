@@ -1,0 +1,9 @@
+[Unit]
+Description=Load supplier stock files into the bookshop's stock list
+
+[Service]
+Type=oneshot
+User=feeds
+Group=feeds
+ExecStart=/usr/local/bin/feed-loader
+TimeoutStartSec=5min

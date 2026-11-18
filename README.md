@@ -35,3 +35,17 @@ as in the Linux track from its Lesson 7. This folder appears inside it at `/prac
 - `server/hc-ping` tells Healthchecks.io how each run ended.
 - `.healthchecks-url` is where your check's ping URL goes. It's a secret: it's
   in `.gitignore`, and nothing here prints it.
+
+Lesson 3 runs on its own server, `feeds`, from the `Vagrantfile` in `feeds/`:
+
+    cd feeds
+    vagrant up          # builds it: runs feeds/setup.sh
+    vagrant ssh
+    vagrant provision   # starts the lab over
+    vagrant destroy -f  # when you're done
+
+- `feeds/feed-loader` checks each supplier stock file that arrives in
+  `/srv/feeds/incoming`, loads good ones into the stock list and moves them to
+  `processed/`, and moves bad ones to `failed/` with a `.reason` file.
+- `feeds/feed-loader.path` starts it whenever a `.csv` file arrives.
+- `feeds/samples/` holds a good file, an update, and two bad ones.

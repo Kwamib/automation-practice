@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# feed-loader: load the supplier's stock files into the bookshop's stock list.
+#
+# Every *.csv in incoming/ is checked. A good file is loaded and moved to
+# processed/. A bad one is moved to failed/, with a .reason file saying why,
+# and nothing from it is loaded: all of a file, or none of it.
+#
+# Exit codes: 0 every file loaded (or none waiting), 1 at least one file failed.
+set -euo pipefail
+
+FEED_DIR=${FEED_DIR:-/srv/feeds}
+STOCK=${STOCK:-/srv/bookshop/stock.csv}
+SETTLE_SECONDS=${SETTLE_SECONDS:-2}
+LOCK=${LOCK:-/run/lock/feed-loader.lock}
+HEADER="isbn,title,quantity"
+
+incoming=$FEED_DIR/incoming
+processed=$FEED_DIR/processed
+failed=$FEED_DIR/failed
+ledger=$FEED_DIR/loaded.sha256
+
+log() { printf '%s feed-loader: %s\n' "$(date -u +%FT%TZ)" "$*" >&2; }
+
+exec 9>"$LOCK"
+if ! flock -n 9; then
+	log "another run is going; it will pick these files up"
+	exit 0
+fi
+touch "$ledger"
+
+# check FILE: print why the file can't be loaded, and fail; or print nothing.
+check() {
+	local f=$1
+	[ -r "$f" ] || { echo "it can't be read"; return 1; }
+	[ -s "$f" ] || { echo "it's empty"; return 1; }
+	[ -z "$(tail -c 1 "$f")" ] || { echo "the last line has no line ending: the file may be incomplete"; return 1; }
+	! grep -q $'\r' "$f" || { echo "it has Windows line endings (CRLF)"; return 1; }
+	[ "$(head -n 1 "$f")" = "$HEADER" ] || { echo "the first line isn't $HEADER"; return 1; }
+	awk -F, '
+		NR == 1 { next }
+		NF != 3 { printf "line %d: expected 3 fields, found %d\n", NR, NF; bad = 1; exit }
+		$1 !~ /^[0-9]+$/ || length($1) != 13 { printf "line %d: ISBN \"%s\" isn'\''t 13 digits\n", NR, $1; bad = 1; exit }
+		$3 !~ /^[0-9]+$/ { printf "line %d: quantity \"%s\" isn'\''t a whole number\n", NR, $3; bad = 1; exit }
+		{ rows++ }
+		END { if (bad) exit 1; if (rows == 0) { print "it has no rows"; exit 1 } }
+	' "$f" || return 1
+	grep -qx "$(sha256sum <"$f" | cut -d' ' -f1)" "$ledger" && { echo "it's already been loaded: a file with exactly the same contents was loaded before"; return 1; }
+	return 0
+}
+
+shopt -s nullglob
+loaded=0 rejected=0
+for f in "$incoming"/*.csv; do
+	name=${f##*/}
+	stamp=$(date -u +%Y%m%dT%H%M%SZ)
+
+	# Wait until the file has stopped changing, in case it's still arriving.
+	while [ -e "$f" ] && [ $(( $(date +%s) - $(stat -c %Y "$f") )) -lt "$SETTLE_SECONDS" ]; do
+		log "waiting for $name to finish arriving ($(stat -c %s "$f") bytes so far)"
+		sleep 1
+	done
+	[ -e "$f" ] || continue
+
+	if ! reason=$(check "$f"); then
+		mv -f -- "$f" "$failed/$stamp-$name"
+		printf '%s\n' "$reason" >"$failed/$stamp-$name.reason"
+		log "REJECTED $name: $reason (moved to failed/)"
+		rejected=$((rejected + 1))
+		continue
+	fi
+
+	# Load: each ISBN in the file sets that book's quantity, new books are added.
+	# Written to a temporary file and renamed, so the stock list is never half written.
+	before=$(( $(wc -l <"$STOCK") - 1 ))
+	tmp=$(mktemp "${STOCK%/*}/.stock-XXXXXX")
+	awk -F, -v OFS=, -v header="$HEADER" '
+		FNR == 1 { next }
+		!($1 in qty) { order[++n] = $1 }
+		{ title[$1] = $2; qty[$1] = $3 }
+		END { print header; for (i = 1; i <= n; i++) print order[i], title[order[i]], qty[order[i]] }
+	' "$STOCK" "$f" >"$tmp"
+	chmod 644 "$tmp"
+	mv -f "$tmp" "$STOCK"
+	after=$(( $(wc -l <"$STOCK") - 1 ))
+
+	sha256sum <"$f" | cut -d' ' -f1 >>"$ledger"
+	mv -f -- "$f" "$processed/$stamp-$name"
+	log "loaded $name: $(( $(wc -l <"$processed/$stamp-$name") - 1 )) rows, $(( after - before )) new books (moved to processed/)"
+	loaded=$((loaded + 1))
+done
+
+[ $((loaded + rejected)) -gt 0 ] && log "done: $loaded loaded, $rejected rejected"
+[ "$rejected" -eq 0 ]
