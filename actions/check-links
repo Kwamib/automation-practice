@@ -3,49 +3,66 @@
 #
 #   check-links LINKS_FILE
 #
-# One URL per line; blank lines and lines starting with # are skipped. A link
-# works if, after following redirects, it answers with a status from 200 to 399.
+# One URL per line; blank lines and lines starting with # are skipped.
+# Each link ends up as one of:
+#   OK       it answered with a status from 200 to 399, after following redirects
+#   BLOCKED  it refused an automated check (403, 429 or 503): look at it by hand
+#   BROKEN   anything else, like 404 (not found) or 000 (no answer at all)
 # Writes a Markdown report to report.md (and to the GitHub Actions run summary,
-# when it runs there). Exit codes: 0 every link works, 1 at least one is broken.
+# when it runs there). Exit codes: 0 nothing broken, 1 at least one BROKEN link.
 # Written for Bash 3.2 too, so it also runs on a Mac.
 set -euo pipefail
 
 file=${1:?usage: check-links LINKS_FILE}
 REPORT=${REPORT:-report.md}
-TIMEOUT=${TIMEOUT:-15}
+TIMEOUT=${TIMEOUT:-15}     # seconds for each try
+TRIES=${TRIES:-3}          # tries for a link that doesn't answer, or says "busy"
+WAIT=${WAIT:-5}            # seconds between tries, whatever the site asks for
 
-ok=0
-bad=0
+# status URL: one request, at most TIMEOUT seconds, no retries of curl's own.
+status() {
+	curl -sS -o /dev/null -L --max-time "$TIMEOUT" \
+		-A "bookshop-link-check (a scheduled GitHub Actions job)" \
+		-w '%{http_code}' "$1" 2>/dev/null || true
+}
+
+ok=0 blocked=0 bad=0
 rows=""
 while IFS= read -r url || [ -n "$url" ]; do
 	case "$url" in "" | \#*) continue ;; esac
-	# -o /dev/null: throw the page away; -L: follow redirects; -w: print only the status.
-	code=$(curl -sS -o /dev/null -L --max-time "$TIMEOUT" --retry 2 --retry-delay 3 \
-		-A "bookshop-link-check (a scheduled GitHub Actions job)" \
-		-w '%{http_code}' "$url" 2>/dev/null) || true
+	try=1
+	code=$(status "$url")
 	code=${code:-000}
+	# Try again only for "no answer", "too many requests" and server errors,
+	# with our own fixed wait: a site can ask us to wait an hour, and we won't.
+	while [ "$try" -lt "$TRIES" ] && { [ "$code" = 000 ] || [ "$code" = 429 ] || [ "$code" -ge 500 ]; }; do
+		sleep "$WAIT"
+		try=$((try + 1))
+		code=$(status "$url")
+		code=${code:-000}
+	done
 	if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then
-		result=OK
-		ok=$((ok + 1))
+		result=OK; ok=$((ok + 1))
+	elif [ "$code" = 403 ] || [ "$code" = 429 ] || [ "$code" = 503 ]; then
+		result=BLOCKED; blocked=$((blocked + 1))
 	else
-		result=BROKEN
-		bad=$((bad + 1))
+		result=BROKEN; bad=$((bad + 1))
 	fi
-	printf '%-7s %s  %s\n' "$result" "$code" "$url"
-	rows="$rows| $result | $code | $url |
+	printf '%-7s %s  %s  (tries: %s)\n' "$result" "$code" "$url" "$try"
+	rows="$rows| $result | $code | $url | $try |
 "
 done <"$file"
 
 {
-	echo "## Link check: $ok working, $bad broken"
+	echo "## Link check: $ok working, $bad broken, $blocked blocked"
 	echo
-	echo "Checked at $(date -u +%Y-%m-%dT%H:%M:%SZ). Status 000 means no answer at all."
+	echo "Checked at $(date -u +%Y-%m-%dT%H:%M:%SZ). BLOCKED means the site refused an automated check: look at it in a browser. Status 000 means no answer at all."
 	echo
-	echo "| Result | Status | Link |"
-	echo "|---|---|---|"
+	echo "| Result | Status | Link | Tries |"
+	echo "|---|---|---|---|"
 	printf '%s' "$rows"
 } >"$REPORT"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then cat "$REPORT" >>"$GITHUB_STEP_SUMMARY"; fi
 
-echo "$ok working, $bad broken"
+echo "$ok working, $bad broken, $blocked blocked"
 [ "$bad" -eq 0 ]

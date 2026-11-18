@@ -31,7 +31,7 @@ jobs:
         run: bash actions/check-links actions/links.txt
 
       - name: Open or update an issue
-        if: failure()
+        if: failure() || cancelled()
         run: bash actions/report-issue open report.md
 
       - name: Close the issue, if every link works again
