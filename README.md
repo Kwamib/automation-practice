@@ -49,3 +49,16 @@ Lesson 3 runs on its own server, `feeds`, from the `Vagrantfile` in `feeds/`:
   `processed/`, and moves bad ones to `failed/` with a `.reason` file.
 - `feeds/feed-loader.path` starts it whenever a `.csv` file arrives.
 - `feeds/samples/` holds a good file, an update, and two bad ones.
+
+Lesson 4 runs on its own server, `office`, from the `Vagrantfile` in `users/`:
+
+    cd users
+    vagrant up          # builds it: runs users/setup.sh
+    vagrant ssh
+    vagrant provision   # starts the lab over
+    vagrant destroy -f  # when you're done
+
+- `users/staff` adds people (`add`), removes every kind of access they had
+  (`remove`), shows who can get in (`audit`), and makes the server match a
+  roster (`sync`). Changes are dry runs unless you add `--apply`.
+- `users/roster.csv` lists who should have access.

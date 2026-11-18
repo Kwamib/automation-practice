@@ -1,0 +1,3 @@
+name,groups,key
+alice,developers,/home/vagrant/keys/alice.pub
+carol,deployers,/home/vagrant/keys/carol.pub

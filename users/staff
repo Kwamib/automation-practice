@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# staff: give people logins on this server, take them away completely, and
+# show who has access. Only touches people in the "bookshop-staff" group,
+# never system accounts or the admin's own login.
+#
+#   staff audit                          who has access, and how
+#   staff add NAME GROUPS KEYFILE        give NAME a login (GROUPS: developers,deployers)
+#   staff remove NAME                    take NAME's access away, completely
+#   staff sync ROSTER                    make the server match a roster file
+#
+# add, remove and sync are dry runs unless you add --apply at the end.
+# Exit codes: 0 done, 1 something failed, 2 called wrongly or refused.
+set -euo pipefail
+
+ARCHIVE=${ARCHIVE:-/var/backups/staff}
+LOG=${LOG:-/var/log/staff.log}
+MAX_REMOVALS=${MAX_REMOVALS:-1}
+ACCESS_GROUPS="developers deployers"
+who_ran=${SUDO_USER:-$(id -un)}
+
+apply=0
+args=()
+for a in "$@"; do
+	if [ "$a" = --apply ]; then apply=1; else args+=("$a"); fi
+done
+set -- "${args[@]}"
+
+say() { printf '%s staff: %s\n' "$(date -u +%FT%TZ)" "$*" >&2; }
+refuse() { say "refusing: $*"; exit 2; }
+usage() { sed -n '6,11p' "$0" | sed -E 's/^# ?//' >&2; exit 2; }
+# Record a change in the log, with who made it. Only real changes are recorded.
+record() {
+	if [ "$apply" -eq 0 ]; then say "(dry run) $*"; return 0; fi
+	say "$*"
+	printf '%s %s: %s\n' "$(date -u +%FT%TZ)" "$who_ran" "$*" >>"$LOG"
+}
+# run CMD...: run it, or in a dry run, show it.
+run() {
+	if [ "$apply" -eq 1 ]; then "$@"; else say "would run: $*"; fi
+}
+
+[ "$(id -u)" -eq 0 ] || { say "run me with sudo"; exit 2; }
+
+valid_name() { [[ $1 =~ ^[a-z][a-z0-9-]{1,30}$ ]]; }
+is_staff() { id -nG "$1" 2>/dev/null | tr ' ' '\n' | grep -qx bookshop-staff; }
+is_expired() {
+	local exp today
+	exp=$(getent shadow "$1" | cut -d: -f8)
+	today=$(( $(date +%s) / 86400 ))
+	[ -n "$exp" ] && [ "$exp" -le "$today" ]
+}
+staff_members() { getent group bookshop-staff | cut -d: -f4 | tr ',' '\n' | grep -v '^$' || true; }
+
+cmd_add() {
+	[ $# -eq 3 ] || usage
+	local name=$1 groups=$2 key=$3 g
+	valid_name "$name" || refuse "'$name' isn't a valid login name (lowercase letters, digits and -)"
+	for g in ${groups//,/ }; do
+		[[ " $ACCESS_GROUPS " == *" $g "* ]] || refuse "'$g' isn't one of: $ACCESS_GROUPS"
+	done
+	[ -r "$key" ] || refuse "can't read the key file $key"
+	local fp verb=added
+	fp=$(ssh-keygen -l -f "$key" 2>/dev/null) || refuse "$key isn't an SSH public key"
+	if id "$name" >/dev/null 2>&1; then
+		is_staff "$name" || refuse "$name exists but isn't in the bookshop-staff group: not one of ours"
+		is_expired "$name" && refuse "$name was removed; to give them access again, ask an admin to review it first"
+		say "$name already exists: making sure their groups and key are right"
+		verb=checked
+		run usermod -G "bookshop-staff,$groups" "$name"
+	else
+		run useradd --create-home --shell /bin/bash --groups "bookshop-staff,$groups" "$name"
+		run usermod --lock "$name"
+	fi
+	run install -d -m 700 -o "$name" -g "$name" "/home/$name/.ssh"
+	run install -m 600 -o "$name" -g "$name" "$key" "/home/$name/.ssh/authorized_keys"
+	record "$verb $name (groups: $groups; key: ${fp%% (*})"
+}
+
+cmd_remove() {
+	[ $# -eq 1 ] || usage
+	local name=$1 g
+	valid_name "$name" || refuse "'$name' isn't a valid login name"
+	id "$name" >/dev/null 2>&1 || refuse "there's no user called $name"
+	is_staff "$name" || refuse "$name isn't in the bookshop-staff group: not one of ours"
+	is_expired "$name" && { say "$name was already removed"; return 0; }
+
+	# 1. No more logins, by any route: lock the password and expire the account.
+	run usermod --lock --expiredate 1 "$name"
+	# 2. Remove their SSH keys, so nothing can log in as them.
+	run rm -f "/home/$name/.ssh/authorized_keys"
+	# 3. Remove scheduled jobs they set up.
+	if crontab -l -u "$name" >/dev/null 2>&1; then run crontab -r -u "$name"; fi
+	# 4. Stop anything still running as them.
+	if pgrep -u "$name" >/dev/null; then
+		say "$name has $(pgrep -u "$name" | wc -l) processes running"
+		run pkill -KILL -u "$name"
+		if [ "$apply" -eq 1 ]; then
+			sleep 1
+			! pgrep -u "$name" >/dev/null || say "WARNING: $name still has processes running; check with: ps -u $name"
+		fi
+	fi
+	# 5. Take them out of every access group.
+	for g in $ACCESS_GROUPS; do
+		if id -nG "$name" | tr ' ' '\n' | grep -qx "$g"; then run gpasswd -d "$name" "$g" >/dev/null; fi
+	done
+	# 6. Keep a copy of their home folder, readable by root only.
+	run install -d -m 700 "$ARCHIVE"
+	run tar -czf "$ARCHIVE/$name-$(date -u +%Y%m%d).tar.gz" -C /home "$name"
+	# 7. Report files they own outside their home folder, for someone to hand over.
+	local others
+	others=$(find / -xdev -user "$name" -not -path "/home/$name" -not -path "/home/$name/*" 2>/dev/null || true)
+	if [ -n "$others" ]; then
+		say "$name owns $(printf '%s\n' "$others" | wc -l) files outside /home/$name, for someone to take over:"
+		printf '%s\n' "$others" | sed 's/^/    /' >&2
+	fi
+	record "removed $name: login locked and expired, keys, scheduled jobs and processes gone, home folder archived"
+}
+
+cmd_audit() {
+	[ $# -eq 0 ] || usage
+	printf '%-10s %-22s %-5s %-6s %-5s %s\n' NAME GROUPS KEYS CRON PROCS STATUS
+	local name groups keys cron procs status
+	for name in $(staff_members); do
+		groups=$(id -nG "$name" | tr ' ' '\n' | grep -vx -e bookshop-staff -e "$name" | paste -sd, - || true)
+		keys=$(grep -c . "/home/$name/.ssh/authorized_keys" 2>/dev/null || echo 0)
+		cron=$(crontab -l -u "$name" >/dev/null 2>&1 && echo yes || echo no)
+		procs=$(pgrep -u "$name" | wc -l || true)
+		if is_expired "$name"; then status="removed"; else status="active"; fi
+		printf '%-10s %-22s %-5s %-6s %-5s %s\n' "$name" "${groups:--}" "$keys" "$cron" "$procs" "$status"
+	done
+}
+
+cmd_sync() {
+	[ $# -eq 1 ] || usage
+	local roster=$1 line name groups key
+	[ -r "$roster" ] || refuse "can't read the roster $roster"
+	declare -A want=()
+	local -a adds=()
+	while IFS= read -r line || [ -n "$line" ]; do
+		[ -n "$line" ] || continue
+		[ "$line" = "name,groups,key" ] && continue
+		IFS=, read -r name groups key <<<"$line"
+		valid_name "$name" || refuse "roster line '$line': '$name' isn't a valid login name"
+		want[$name]=1
+		adds+=("$name $groups $key")
+	done <"$roster"
+
+	[ "${#want[@]}" -gt 0 ] || refuse "the roster lists nobody; that would remove everyone. Is the file empty or cut short?"
+
+	local -a removes=()
+	for name in $(staff_members); do
+		is_expired "$name" && continue
+		[ -n "${want[$name]:-}" ] || removes+=("$name")
+	done
+	if [ "${#removes[@]}" -gt "$MAX_REMOVALS" ]; then
+		refuse "the roster would remove ${#removes[@]} people (${removes[*]}), more than MAX_REMOVALS=$MAX_REMOVALS. Check the roster; if it's right, run again with MAX_REMOVALS=${#removes[@]}"
+	fi
+
+	local a
+	for a in "${adds[@]}"; do
+		read -r name groups key <<<"$a"
+		cmd_add "$name" "$groups" "$key"
+	done
+	for name in "${removes[@]}"; do
+		cmd_remove "$name"
+	done
+	[ "$apply" -eq 1 ] || say "dry run: nothing was changed. Add --apply to make these changes."
+}
+
+case "${1:-}" in
+	audit) shift; cmd_audit "$@" ;;
+	add) shift; cmd_add "$@"; [ "$apply" -eq 1 ] || say "dry run: nothing was changed. Add --apply to do it." ;;
+	remove) shift; cmd_remove "$@"; [ "$apply" -eq 1 ] || say "dry run: nothing was changed. Add --apply to do it." ;;
+	sync) shift; cmd_sync "$@" ;;
+	*) usage ;;
+esac
