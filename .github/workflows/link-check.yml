@@ -3,7 +3,7 @@ name: Nightly link check
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every day at 06:17 UTC
+    - cron: "17 6 * * *"   # every day at 06:17 UTC
   workflow_dispatch:         # and a "Run workflow" button, for running it by hand
 
 # The least this job needs: read the code, and open or close issues.
