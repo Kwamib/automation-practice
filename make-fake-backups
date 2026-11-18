@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# make-fake-backups: build a practice folder of nightly backups, with traps in it.
+#   ./make-fake-backups /lab     (run it again any time to start over)
+#
+# Every file is made up, a few hundred KB of random bytes, with its date set by
+# touch so it looks as old as its name says. Nothing outside the folder is touched.
+set -euo pipefail
+
+root=${1:-}
+case "$root" in
+	"" | / | "$HOME" | /home | /root | /etc | /usr | /var | /bin | /srv)
+		echo "usage: make-fake-backups FOLDER   (a new or practice folder, like /lab)" >&2
+		exit 2 ;;
+esac
+
+rm -rf "$root"
+mkdir -p "$root/backups/monthly" "$root/important" "$root/stopped"
+now=$(date +%s)
+
+# make FILE DAYS_AGO: a file of random bytes, dated DAYS_AGO days (and an hour) back.
+make() {
+	local file=$1 days=$2 when
+	when=$(( now - days * 86400 - 3600 ))
+	head -c $(( (180 + RANDOM % 60) * 1024 )) /dev/urandom >"$file"
+	touch -d "@$when" "$file"
+}
+day() { date -u -d "@$(( now - $1 * 86400 - 3600 ))" +%F; }
+
+# 30 nights of backups: last night (1 day ago) back to 30 days ago.
+for n in $(seq 1 30); do
+	make "$root/backups/backup-$(day "$n").tar.gz" "$n"
+done
+
+# The traps.
+make "$root/backups/backup-$(day 25) copy.tar.gz" 25                    # someone's copy, with a space
+head -c 50000 /dev/urandom >"$root/backups/backup-$(day 0).tar.gz.part"  # tonight's, still being written
+echo "Nightly backups of the bookshop's database. Ask Sam before deleting anything." >"$root/backups/README.txt"
+touch -d "@$(( now - 40 * 86400 ))" "$root/backups/README.txt"
+ln -s "backup-$(day 1).tar.gz" "$root/backups/backup-latest.tar.gz"     # a link to the newest
+make "$root/backups/monthly/backup-$(day 60).tar.gz" 60                  # a monthly copy, kept on purpose
+make "$root/important/backup-$(day 400).tar.gz" 400                      # the one from before the move
+ln -s ../important "$root/backups/archive"                               # a link to another folder
+
+# A second server, whose backups stopped 20 days ago.
+for n in $(seq 20 29); do
+	make "$root/stopped/backup-$(day "$n").tar.gz" "$n"
+done
+
+echo "made $root:"
+for d in backups backups/monthly important stopped; do
+	printf '  %-16s %3s files\n' "$d" "$(find "$root/$d" -maxdepth 1 -type f | wc -l)"
+done

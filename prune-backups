@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# prune-backups: delete old backups from one folder, safely.
+#
+#   prune-backups FOLDER            show what would be deleted, and delete nothing
+#   prune-backups --apply FOLDER    delete it
+#
+# The rules: always keep the newest KEEP backups, however old they are. Of the
+# rest, delete those older than MAX_AGE_DAYS. Only regular files named like
+# PATTERN, directly in FOLDER, are ever looked at: never folders, never links,
+# never anything in a folder below it.
+#
+# Exit codes: 0 done, 1 something's wrong (a delete failed, or the newest backup
+# is too old: the backups may have stopped), 2 called wrongly or refused.
+set -euo pipefail
+
+KEEP=${KEEP:-7}
+MAX_AGE_DAYS=${MAX_AGE_DAYS:-14}
+PATTERN=${PATTERN:-backup-*.tar.gz}
+
+log() { printf '%s prune-backups: %s\n' "$(date -u +%FT%TZ)" "$*" >&2; }
+refuse() { log "refusing: $*"; exit 2; }
+usage() { echo "usage: prune-backups [--apply] FOLDER" >&2; exit 2; }
+
+apply=0
+if [ "${1:-}" = --apply ]; then apply=1; shift; fi
+[ $# -eq 1 ] || usage
+dir=$1
+
+# Guard rails, before anything is listed, let alone deleted.
+[ -n "$dir" ] || refuse "the folder is an empty string (an unset variable?)"
+[[ $KEEP =~ ^[0-9]+$ ]] && [ "$KEEP" -ge 1 ] || refuse "KEEP must be 1 or more, not '$KEEP'"
+[[ $MAX_AGE_DAYS =~ ^[0-9]+$ ]] || refuse "MAX_AGE_DAYS must be a number, not '$MAX_AGE_DAYS'"
+[ -d "$dir" ] || refuse "$dir isn't a folder"
+[ ! -L "$dir" ] || refuse "$dir is a link; give the real folder"
+real=$(realpath "$dir")
+case "$real" in
+	/ | /bin | /boot | /dev | /etc | /home | /lib | /proc | /root | /sbin | /sys | /usr | /var | "$HOME")
+		refuse "$real is a system or home folder" ;;
+esac
+
+# Every candidate, newest first: modification time, size and path, separated by
+# NUL bytes so a name with a space (or a newline) arrives whole.
+mapfile -d '' entries < <(
+	find "$real" -mindepth 1 -maxdepth 1 -type f -name "$PATTERN" -printf '%T@ %s %p\0' | sort -z -rn
+)
+
+now=$(date +%s)
+kept=0 deleted=0 freed=0 failed=0 newest_age=-1
+for e in "${entries[@]}"; do
+	mtime=${e%% *}; rest=${e#* }
+	size=${rest%% *}; path=${rest#* }
+	age=$(( (now - ${mtime%.*}) / 86400 ))
+	[ "$newest_age" -ge 0 ] || newest_age=$age
+
+	if [ "$kept" -lt "$KEEP" ]; then
+		kept=$((kept + 1))
+		continue
+	fi
+	if [ "$age" -le "$MAX_AGE_DAYS" ]; then
+		kept=$((kept + 1))
+		continue
+	fi
+	if [ "$apply" -eq 0 ]; then
+		log "would delete $path ($age days old, $size bytes)"
+	elif rm -f -- "$path"; then
+		log "deleted $path ($age days old, $size bytes)"
+	else
+		log "couldn't delete $path"
+		failed=$((failed + 1))
+		continue
+	fi
+	deleted=$((deleted + 1))
+	freed=$((freed + size))
+done
+
+verb=$([ "$apply" -eq 1 ] && echo "deleted" || echo "would delete")
+log "$real: ${#entries[@]} backups, kept $kept, $verb $deleted ($(numfmt --to=iec "$freed"))"
+[ "$apply" -eq 1 ] || log "dry run: nothing was deleted. Add --apply to delete."
+
+status=0
+if [ "${#entries[@]}" -eq 0 ]; then
+	log "no backups at all in $real"
+	status=1
+elif [ "$newest_age" -gt 1 ]; then
+	log "the newest backup is $newest_age days old: the backups may have stopped"
+	status=1
+fi
+[ "$failed" -eq 0 ] || status=1
+exit "$status"

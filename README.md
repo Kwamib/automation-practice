@@ -1,7 +1,7 @@
 # automation-practice
 
 Practice files for the Automation track on [kwamib.dev](https://kwamib.dev/resources/automation).
-Everything here is made up: the bookshop, its logs and its errors. It picks up where
+Everything here is made up: the bookshop, its logs and its backups. It picks up where
 the Linux and Python tracks leave off.
 
 Lesson 1 runs in a container with this folder inside it, like the Linux track's
@@ -9,11 +9,14 @@ first lessons:
 
     docker run -it --rm -v "$PWD":/practice -w /practice ubuntu:24.04 bash
 
-- `logs/` holds two days of the bookshop's app logs from two web servers, in
-  `web-1/`, `web-2/` and `old logs/` (the space in that name is on purpose).
-- `error-report` counts each distinct error in those logs, most frequent first,
-  and is safe to run unattended. `./error-report --dry-run` changes nothing.
-- `reports/` is where the reports go. It isn't kept in Git.
+- `make-fake-backups /lab` builds a folder of 30 nights of fake backups, dated
+  with `touch` so each looks as old as its name says, plus some traps: a copy
+  with a space in its name, a half-written `.part` file, links, a `monthly/`
+  folder, and a second server whose backups stopped. Run it again to start over.
+  Use a folder inside the container, like `/lab`: the lesson deletes things there.
+- `prune-backups` deletes old backups safely: a dry run unless you add
+  `--apply`, guard rails against the wrong folder, and it always keeps the
+  newest 7.
 
 Lesson 2 runs on a small virtual machine, made by
 [Vagrant](https://developer.hashicorp.com/vagrant) from the `Vagrantfile` here,
