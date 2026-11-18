@@ -1,0 +1,6 @@
+# The bookshop website's links to other sites, one per line.
+# Lines starting with # are skipped.
+https://www.gutenberg.org/
+https://openlibrary.org/
+https://www.loc.gov/
+https://openlibrary.org/this-page-has-moved

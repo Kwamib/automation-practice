@@ -1,3 +1,4 @@
 reports/
 .healthchecks-url
 .vagrant/
+report.md

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# check-links: check that every link in a list still works.
+#
+#   check-links LINKS_FILE
+#
+# One URL per line; blank lines and lines starting with # are skipped. A link
+# works if, after following redirects, it answers with a status from 200 to 399.
+# Writes a Markdown report to report.md (and to the GitHub Actions run summary,
+# when it runs there). Exit codes: 0 every link works, 1 at least one is broken.
+# Written for Bash 3.2 too, so it also runs on a Mac.
+set -euo pipefail
+
+file=${1:?usage: check-links LINKS_FILE}
+REPORT=${REPORT:-report.md}
+TIMEOUT=${TIMEOUT:-15}
+
+ok=0
+bad=0
+rows=""
+while IFS= read -r url || [ -n "$url" ]; do
+	case "$url" in "" | \#*) continue ;; esac
+	# -o /dev/null: throw the page away; -L: follow redirects; -w: print only the status.
+	code=$(curl -sS -o /dev/null -L --max-time "$TIMEOUT" --retry 2 --retry-delay 3 \
+		-A "bookshop-link-check (a scheduled GitHub Actions job)" \
+		-w '%{http_code}' "$url" 2>/dev/null) || true
+	code=${code:-000}
+	if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then
+		result=OK
+		ok=$((ok + 1))
+	else
+		result=BROKEN
+		bad=$((bad + 1))
+	fi
+	printf '%-7s %s  %s\n' "$result" "$code" "$url"
+	rows="$rows| $result | $code | $url |
+"
+done <"$file"
+
+{
+	echo "## Link check: $ok working, $bad broken"
+	echo
+	echo "Checked at $(date -u +%Y-%m-%dT%H:%M:%SZ). Status 000 means no answer at all."
+	echo
+	echo "| Result | Status | Link |"
+	echo "|---|---|---|"
+	printf '%s' "$rows"
+} >"$REPORT"
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then cat "$REPORT" >>"$GITHUB_STEP_SUMMARY"; fi
+
+echo "$ok working, $bad broken"
+[ "$bad" -eq 0 ]
