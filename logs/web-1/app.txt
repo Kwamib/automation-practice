@@ -1,0 +1,341 @@
+2026-11-16 00:02:38 INFO  cache hit for books list
+2026-11-16 00:04:40 INFO  request handled in 156ms
+2026-11-16 00:10:00 INFO  request handled in 127ms
+2026-11-16 00:13:17 INFO  request handled in 37ms
+2026-11-16 00:18:06 INFO  request handled in 30ms
+2026-11-16 00:23:24 INFO  request handled in 88ms
+2026-11-16 00:29:56 INFO  order 1040 placed
+2026-11-16 00:31:41 INFO  request handled in 168ms
+2026-11-16 00:33:15 INFO  order 1048 placed
+2026-11-16 00:36:35 INFO  order 1092 placed
+2026-11-16 00:38:19 INFO  request handled in 142ms
+2026-11-16 00:44:02 INFO  cache hit for books list
+2026-11-16 00:48:28 INFO  request handled in 86ms
+2026-11-16 00:53:53 INFO  order 1002 placed
+2026-11-16 00:58:56 INFO  health check ok, errors_total=0
+2026-11-16 01:05:10 INFO  order 1012 placed
+2026-11-16 01:08:15 INFO  cache hit for books list
+2026-11-16 01:12:16 INFO  request handled in 115ms
+2026-11-16 01:18:02 INFO  order 1054 placed
+2026-11-16 01:23:51 INFO  health check ok, errors_total=0
+2026-11-16 01:26:58 INFO  request handled in 180ms
+2026-11-16 01:32:43 INFO  health check ok, errors_total=0
+2026-11-16 01:38:31 INFO  request handled in 38ms
+2026-11-16 01:44:06 INFO  request handled in 133ms
+2026-11-16 01:49:08 INFO  cache hit for books list
+2026-11-16 01:53:45 INFO  request handled in 125ms
+2026-11-16 01:55:59 INFO  request handled in 160ms
+2026-11-16 01:58:24 INFO  health check ok, errors_total=0
+2026-11-16 02:04:20 INFO  health check ok, errors_total=0
+2026-11-16 02:08:59 INFO  request handled in 37ms
+2026-11-16 02:14:09 ERROR db connection timed out after 5000ms
+2026-11-16 02:14:29 INFO  request handled in 178ms
+2026-11-16 02:14:41 ERROR db connection timed out after 5000ms
+2026-11-16 02:15:12 ERROR db connection timed out after 5000ms
+2026-11-16 02:19:20 INFO  cache hit for books list
+2026-11-16 02:22:16 INFO  request handled in 33ms
+2026-11-16 02:25:28 INFO  request handled in 170ms
+2026-11-16 02:28:56 INFO  request handled in 118ms
+2026-11-16 02:35:21 INFO  request handled in 98ms
+2026-11-16 02:41:31 INFO  cache hit for books list
+2026-11-16 02:43:03 INFO  request handled in 161ms
+2026-11-16 02:45:39 INFO  request handled in 173ms
+2026-11-16 02:48:54 INFO  request handled in 44ms
+2026-11-16 02:54:30 INFO  health check ok, errors_total=0
+2026-11-16 03:00:51 INFO  cache hit for books list
+2026-11-16 03:06:39 INFO  request handled in 121ms
+2026-11-16 03:11:41 INFO  request handled in 167ms
+2026-11-16 03:17:47 INFO  cache hit for books list
+2026-11-16 03:24:30 INFO  request handled in 37ms
+2026-11-16 03:27:57 INFO  cache hit for books list
+2026-11-16 03:34:08 INFO  cache hit for books list
+2026-11-16 03:36:24 INFO  health check ok, errors_total=0
+2026-11-16 03:40:04 INFO  request handled in 48ms
+2026-11-16 03:42:16 INFO  health check ok, errors_total=0
+2026-11-16 03:47:37 INFO  request handled in 101ms
+2026-11-16 03:51:14 INFO  request handled in 77ms
+2026-11-16 03:55:40 INFO  request handled in 72ms
+2026-11-16 03:58:31 INFO  request handled in 73ms
+2026-11-16 04:02:20 INFO  cache hit for books list
+2026-11-16 04:06:20 INFO  request handled in 112ms
+2026-11-16 04:12:04 INFO  request handled in 36ms
+2026-11-16 04:16:13 INFO  request handled in 137ms
+2026-11-16 04:19:19 INFO  request handled in 94ms
+2026-11-16 04:25:10 INFO  order 1077 placed
+2026-11-16 04:30:21 INFO  health check ok, errors_total=0
+2026-11-16 04:32:01 INFO  request handled in 131ms
+2026-11-16 04:34:45 INFO  request handled in 71ms
+2026-11-16 04:40:03 INFO  cache hit for books list
+2026-11-16 04:45:11 INFO  request handled in 86ms
+2026-11-16 04:52:03 INFO  health check ok, errors_total=0
+2026-11-16 04:57:57 INFO  request handled in 164ms
+2026-11-16 04:59:42 INFO  request handled in 177ms
+2026-11-16 05:03:56 INFO  cache hit for books list
+2026-11-16 05:09:04 INFO  request handled in 106ms
+2026-11-16 05:11:38 INFO  order 1006 placed
+2026-11-16 05:15:44 INFO  request handled in 49ms
+2026-11-16 05:19:52 INFO  order 1038 placed
+2026-11-16 05:22:43 INFO  request handled in 94ms
+2026-11-16 05:25:19 INFO  request handled in 39ms
+2026-11-16 05:31:51 INFO  health check ok, errors_total=0
+2026-11-16 05:38:12 INFO  request handled in 160ms
+2026-11-16 05:40:01 INFO  request handled in 118ms
+2026-11-16 05:42:21 INFO  request handled in 140ms
+2026-11-16 05:48:53 INFO  request handled in 56ms
+2026-11-16 05:53:42 INFO  request handled in 157ms
+2026-11-16 05:55:20 INFO  request handled in 132ms
+2026-11-16 05:59:14 INFO  request handled in 81ms
+2026-11-16 06:03:31 INFO  health check ok, errors_total=0
+2026-11-16 06:09:49 INFO  health check ok, errors_total=0
+2026-11-16 06:14:12 INFO  request handled in 98ms
+2026-11-16 06:16:31 INFO  health check ok, errors_total=0
+2026-11-16 06:22:41 INFO  request handled in 166ms
+2026-11-16 06:28:19 INFO  health check ok, errors_total=0
+2026-11-16 06:34:21 INFO  request handled in 40ms
+2026-11-16 06:36:34 INFO  request handled in 72ms
+2026-11-16 06:42:39 INFO  request handled in 115ms
+2026-11-16 06:49:16 INFO  request handled in 95ms
+2026-11-16 06:53:54 INFO  request handled in 59ms
+2026-11-16 06:57:53 INFO  request handled in 155ms
+2026-11-16 07:00:32 INFO  cache hit for books list
+2026-11-16 07:02:55 INFO  request handled in 134ms
+2026-11-16 07:05:02 INFO  request handled in 67ms
+2026-11-16 07:07:36 INFO  request handled in 180ms
+2026-11-16 07:12:19 INFO  request handled in 170ms
+2026-11-16 07:15:43 INFO  cache hit for books list
+2026-11-16 07:19:29 INFO  request handled in 105ms
+2026-11-16 07:25:47 INFO  request handled in 59ms
+2026-11-16 07:31:11 INFO  health check ok, errors_total=0
+2026-11-16 07:33:36 INFO  health check ok, errors_total=0
+2026-11-16 07:37:37 INFO  request handled in 33ms
+2026-11-16 07:39:53 INFO  request handled in 40ms
+2026-11-16 07:42:59 INFO  request handled in 180ms
+2026-11-16 07:48:04 INFO  request handled in 145ms
+2026-11-16 07:50:59 INFO  cache hit for books list
+2026-11-16 07:53:50 INFO  cache hit for books list
+2026-11-16 07:56:12 INFO  request handled in 126ms
+2026-11-16 08:02:19 INFO  order 1037 placed
+2026-11-16 08:08:30 INFO  request handled in 152ms
+2026-11-16 08:12:41 INFO  request handled in 111ms
+2026-11-16 08:14:31 INFO  request handled in 105ms
+2026-11-16 08:21:06 INFO  request handled in 130ms
+2026-11-16 08:25:16 INFO  request handled in 46ms
+2026-11-16 08:29:28 INFO  order 1058 placed
+2026-11-16 08:31:55 INFO  request handled in 168ms
+2026-11-16 08:37:25 INFO  cache hit for books list
+2026-11-16 08:41:07 INFO  request handled in 83ms
+2026-11-16 08:45:14 INFO  request handled in 122ms
+2026-11-16 08:47:25 INFO  health check ok, errors_total=0
+2026-11-16 08:49:40 INFO  order 1057 placed
+2026-11-16 08:51:56 INFO  cache hit for books list
+2026-11-16 08:58:55 INFO  request handled in 88ms
+2026-11-16 09:03:44 INFO  order 1005 placed
+2026-11-16 09:08:01 INFO  request handled in 178ms
+2026-11-16 09:12:06 INFO  request handled in 55ms
+2026-11-16 09:18:14 INFO  cache hit for books list
+2026-11-16 09:24:49 INFO  request handled in 86ms
+2026-11-16 09:26:29 INFO  health check ok, errors_total=0
+2026-11-16 09:31:05 ERROR payment gateway returned 502
+2026-11-16 09:31:06 WARN  retrying payment after error from gateway
+2026-11-16 09:31:20 ERROR payment gateway returned 502
+2026-11-16 09:31:24 INFO  request handled in 171ms
+2026-11-16 09:33:30 INFO  cache hit for books list
+2026-11-16 09:35:11 INFO  cache hit for books list
+2026-11-16 09:39:09 INFO  health check ok, errors_total=0
+2026-11-16 09:43:42 INFO  request handled in 69ms
+2026-11-16 09:46:03 INFO  request handled in 113ms
+2026-11-16 09:48:12 INFO  request handled in 74ms
+2026-11-16 09:51:13 INFO  health check ok, errors_total=0
+2026-11-16 09:53:55 INFO  health check ok, errors_total=0
+2026-11-16 09:58:08 INFO  request handled in 161ms
+2026-11-16 10:04:46 INFO  request handled in 82ms
+2026-11-16 10:07:28 INFO  request handled in 38ms
+2026-11-16 10:11:39 INFO  health check ok, errors_total=0
+2026-11-16 10:18:28 INFO  health check ok, errors_total=0
+2026-11-16 10:24:41 INFO  health check ok, errors_total=0
+2026-11-16 10:27:56 INFO  request handled in 140ms
+2026-11-16 10:34:01 INFO  request handled in 93ms
+2026-11-16 10:37:40 INFO  health check ok, errors_total=0
+2026-11-16 10:42:58 INFO  health check ok, errors_total=0
+2026-11-16 10:49:09 INFO  request handled in 142ms
+2026-11-16 10:55:14 INFO  request handled in 131ms
+2026-11-16 10:59:37 INFO  request handled in 154ms
+2026-11-16 11:01:19 INFO  health check ok, errors_total=0
+2026-11-16 11:06:22 INFO  order 1002 placed
+2026-11-16 11:08:23 INFO  cache hit for books list
+2026-11-16 11:14:49 INFO  request handled in 62ms
+2026-11-16 11:17:29 INFO  request handled in 100ms
+2026-11-16 11:22:22 INFO  cache hit for books list
+2026-11-16 11:25:20 INFO  cache hit for books list
+2026-11-16 11:28:49 INFO  request handled in 75ms
+2026-11-16 11:34:49 INFO  request handled in 142ms
+2026-11-16 11:41:46 INFO  cache hit for books list
+2026-11-16 11:45:18 INFO  request handled in 152ms
+2026-11-16 11:48:43 INFO  cache hit for books list
+2026-11-16 11:53:05 INFO  cache hit for books list
+2026-11-16 11:56:55 INFO  order 1028 placed
+2026-11-16 11:58:49 INFO  order 1097 placed
+2026-11-16 12:04:40 INFO  cache hit for books list
+2026-11-16 12:09:18 INFO  request handled in 82ms
+2026-11-16 12:13:27 INFO  request handled in 106ms
+2026-11-16 12:19:39 INFO  request handled in 148ms
+2026-11-16 12:26:13 INFO  request handled in 61ms
+2026-11-16 12:32:53 INFO  order 1073 placed
+2026-11-16 12:37:36 INFO  request handled in 94ms
+2026-11-16 12:42:44 INFO  request handled in 175ms
+2026-11-16 12:44:40 INFO  request handled in 130ms
+2026-11-16 12:51:36 INFO  request handled in 161ms
+2026-11-16 12:54:30 INFO  request handled in 40ms
+2026-11-16 13:00:28 INFO  order 1032 placed
+2026-11-16 13:02:44 ERROR db connection timed out after 5000ms
+2026-11-16 13:03:15 ERROR db connection timed out after 5000ms
+2026-11-16 13:07:19 INFO  request handled in 51ms
+2026-11-16 13:10:00 INFO  order 1078 placed
+2026-11-16 13:12:11 INFO  request handled in 91ms
+2026-11-16 13:16:56 INFO  order 1055 placed
+2026-11-16 13:21:49 INFO  request handled in 113ms
+2026-11-16 13:27:03 INFO  request handled in 154ms
+2026-11-16 13:30:21 INFO  request handled in 166ms
+2026-11-16 13:35:20 INFO  order 1084 placed
+2026-11-16 13:39:21 INFO  request handled in 126ms
+2026-11-16 13:45:37 INFO  request handled in 78ms
+2026-11-16 13:51:37 INFO  request handled in 35ms
+2026-11-16 13:53:22 INFO  cache hit for books list
+2026-11-16 14:00:02 INFO  request handled in 96ms
+2026-11-16 14:03:17 INFO  request handled in 67ms
+2026-11-16 14:09:24 INFO  request handled in 109ms
+2026-11-16 14:15:53 INFO  health check ok, errors_total=0
+2026-11-16 14:21:11 INFO  health check ok, errors_total=0
+2026-11-16 14:24:07 INFO  request handled in 155ms
+2026-11-16 14:29:12 INFO  health check ok, errors_total=0
+2026-11-16 14:32:28 INFO  cache hit for books list
+2026-11-16 14:37:14 INFO  request handled in 57ms
+2026-11-16 14:38:56 INFO  request handled in 33ms
+2026-11-16 14:45:05 INFO  request handled in 64ms
+2026-11-16 14:47:13 INFO  request handled in 176ms
+2026-11-16 14:51:22 INFO  request handled in 121ms
+2026-11-16 14:57:22 INFO  request handled in 61ms
+2026-11-16 15:02:38 INFO  cache hit for books list
+2026-11-16 15:07:07 INFO  request handled in 132ms
+2026-11-16 15:11:30 INFO  health check ok, errors_total=0
+2026-11-16 15:17:52 INFO  request handled in 126ms
+2026-11-16 15:22:37 INFO  request handled in 30ms
+2026-11-16 15:26:29 INFO  cache hit for books list
+2026-11-16 15:32:20 INFO  request handled in 148ms
+2026-11-16 15:38:57 INFO  health check ok, errors_total=0
+2026-11-16 15:43:56 INFO  order 1091 placed
+2026-11-16 15:48:02 INFO  cache hit for books list
+2026-11-16 15:53:22 INFO  cache hit for books list
+2026-11-16 15:59:23 INFO  request handled in 164ms
+2026-11-16 16:00:54 INFO  cache hit for books list
+2026-11-16 16:07:20 INFO  request handled in 133ms
+2026-11-16 16:11:42 INFO  health check ok, errors_total=0
+2026-11-16 16:18:11 INFO  order 1089 placed
+2026-11-16 16:20:15 INFO  request handled in 93ms
+2026-11-16 16:27:12 INFO  order 1037 placed
+2026-11-16 16:34:04 INFO  request handled in 69ms
+2026-11-16 16:40:58 INFO  health check ok, errors_total=0
+2026-11-16 16:45:51 INFO  health check ok, errors_total=0
+2026-11-16 16:48:52 INFO  health check ok, errors_total=0
+2026-11-16 16:55:31 INFO  request handled in 97ms
+2026-11-16 17:00:31 INFO  health check ok, errors_total=0
+2026-11-16 17:06:39 INFO  request handled in 148ms
+2026-11-16 17:10:21 INFO  request handled in 149ms
+2026-11-16 17:16:12 INFO  request handled in 160ms
+2026-11-16 17:18:32 INFO  cache hit for books list
+2026-11-16 17:23:38 INFO  request handled in 47ms
+2026-11-16 17:28:54 INFO  request handled in 159ms
+2026-11-16 17:31:46 INFO  cache hit for books list
+2026-11-16 17:36:41 INFO  cache hit for books list
+2026-11-16 17:40:32 INFO  cache hit for books list
+2026-11-16 17:43:48 INFO  request handled in 90ms
+2026-11-16 17:48:08 INFO  request handled in 49ms
+2026-11-16 17:54:05 INFO  cache hit for books list
+2026-11-16 17:59:34 INFO  request handled in 42ms
+2026-11-16 18:02:30 INFO  request handled in 172ms
+2026-11-16 18:06:18 INFO  request handled in 89ms
+2026-11-16 18:11:08 INFO  cache hit for books list
+2026-11-16 18:14:06 INFO  request handled in 96ms
+2026-11-16 18:20:48 INFO  request handled in 86ms
+2026-11-16 18:24:30 INFO  order 1090 placed
+2026-11-16 18:28:05 INFO  health check ok, errors_total=0
+2026-11-16 18:29:50 INFO  health check ok, errors_total=0
+2026-11-16 18:36:38 INFO  request handled in 140ms
+2026-11-16 18:40:15 INFO  health check ok, errors_total=0
+2026-11-16 18:43:22 INFO  request handled in 72ms
+2026-11-16 18:49:48 INFO  request handled in 67ms
+2026-11-16 18:56:28 INFO  order 1058 placed
+2026-11-16 19:02:27 INFO  request handled in 65ms
+2026-11-16 19:07:42 INFO  request handled in 132ms
+2026-11-16 19:11:15 INFO  request handled in 82ms
+2026-11-16 19:15:21 INFO  request handled in 88ms
+2026-11-16 19:20:14 INFO  request handled in 55ms
+2026-11-16 19:23:19 INFO  request handled in 35ms
+2026-11-16 19:26:39 INFO  cache hit for books list
+2026-11-16 19:32:22 INFO  cache hit for books list
+2026-11-16 19:39:05 INFO  request handled in 100ms
+2026-11-16 19:41:35 INFO  cache hit for books list
+2026-11-16 19:44:33 INFO  request handled in 132ms
+2026-11-16 19:48:02 INFO  request handled in 126ms
+2026-11-16 19:50:58 INFO  order 1030 placed
+2026-11-16 19:54:53 INFO  request handled in 178ms
+2026-11-16 19:59:42 INFO  request handled in 96ms
+2026-11-16 20:04:01 INFO  request handled in 58ms
+2026-11-16 20:07:20 INFO  order 1005 placed
+2026-11-16 20:08:57 INFO  health check ok, errors_total=0
+2026-11-16 20:14:32 INFO  request handled in 128ms
+2026-11-16 20:20:59 INFO  request handled in 80ms
+2026-11-16 20:25:53 INFO  request handled in 68ms
+2026-11-16 20:27:38 INFO  request handled in 67ms
+2026-11-16 20:33:45 INFO  request handled in 127ms
+2026-11-16 20:37:25 INFO  request handled in 148ms
+2026-11-16 20:41:30 INFO  order 1004 placed
+2026-11-16 20:47:34 INFO  request handled in 63ms
+2026-11-16 20:49:25 INFO  order 1099 placed
+2026-11-16 20:51:55 INFO  request handled in 78ms
+2026-11-16 20:53:39 INFO  request handled in 63ms
+2026-11-16 20:57:31 INFO  cache hit for books list
+2026-11-16 21:00:39 INFO  cache hit for books list
+2026-11-16 21:05:28 INFO  request handled in 98ms
+2026-11-16 21:09:11 INFO  cache hit for books list
+2026-11-16 21:12:45 INFO  request handled in 180ms
+2026-11-16 21:19:17 INFO  request handled in 139ms
+2026-11-16 21:25:56 INFO  cache hit for books list
+2026-11-16 21:32:52 INFO  request handled in 45ms
+2026-11-16 21:37:22 INFO  request handled in 167ms
+2026-11-16 21:40:34 INFO  cache hit for books list
+2026-11-16 21:46:38 INFO  request handled in 47ms
+2026-11-16 21:50:24 INFO  cache hit for books list
+2026-11-16 21:52:31 INFO  request handled in 54ms
+2026-11-16 21:55:18 INFO  request handled in 82ms
+2026-11-16 22:00:27 INFO  health check ok, errors_total=0
+2026-11-16 22:02:24 INFO  cache hit for books list
+2026-11-16 22:08:16 INFO  request handled in 124ms
+2026-11-16 22:10:36 INFO  order 1005 placed
+2026-11-16 22:13:10 INFO  request handled in 143ms
+2026-11-16 22:15:45 INFO  health check ok, errors_total=0
+2026-11-16 22:21:03 INFO  request handled in 164ms
+2026-11-16 22:24:51 INFO  request handled in 113ms
+2026-11-16 22:27:04 INFO  request handled in 128ms
+2026-11-16 22:29:03 INFO  cache hit for books list
+2026-11-16 22:33:13 INFO  cache hit for books list
+2026-11-16 22:36:56 INFO  health check ok, errors_total=0
+2026-11-16 22:39:25 INFO  health check ok, errors_total=0
+2026-11-16 22:43:30 INFO  request handled in 92ms
+2026-11-16 22:49:17 INFO  cache hit for books list
+2026-11-16 22:53:36 INFO  order 1065 placed
+2026-11-16 22:58:26 INFO  order 1074 placed
+2026-11-16 23:04:02 INFO  request handled in 144ms
+2026-11-16 23:10:00 INFO  order 1092 placed
+2026-11-16 23:16:27 INFO  cache hit for books list
+2026-11-16 23:22:31 INFO  request handled in 104ms
+2026-11-16 23:25:21 INFO  request handled in 129ms
+2026-11-16 23:31:17 INFO  request handled in 134ms
+2026-11-16 23:35:43 INFO  request handled in 46ms
+2026-11-16 23:37:35 INFO  request handled in 166ms
+2026-11-16 23:40:02 ERROR search index rebuild failed: error reading shard 3
+2026-11-16 23:41:45 INFO  request handled in 111ms
+2026-11-16 23:46:15 INFO  request handled in 163ms
+2026-11-16 23:52:01 INFO  request handled in 61ms
+2026-11-16 23:54:47 INFO  request handled in 113ms
+2026-11-16 23:59:04 INFO  cache hit for books list

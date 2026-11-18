@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# hc-ping: tell Healthchecks.io how the last run of error-report.service ended.
+#
+# systemd runs this after every run (ExecStopPost), and sets SERVICE_RESULT
+# (success, exit-code, timeout, signal...) and EXIT_STATUS (a number, or a
+# signal name like TERM). Healthchecks.io takes a number on the end of the
+# ping URL: 0 means it worked, anything else means it failed.
+#
+# The ping URL is a secret (anyone with it can mark the check up or down), so
+# it's read from a file and never printed.
+set -euo pipefail
+
+url_file=/etc/error-report/ping-url
+if [ ! -r "$url_file" ]; then
+	echo "hc-ping: no ping URL in $url_file, so not telling anyone" >&2
+	exit 0
+fi
+url=$(tr -d '[:space:]' <"$url_file")
+if ! [[ $url =~ ^https://hc-ping\.com/[A-Za-z0-9_/-]+$ ]]; then
+	echo "hc-ping: $url_file doesn't hold a Healthchecks.io ping URL, so not telling anyone" >&2
+	exit 0
+fi
+
+result=${SERVICE_RESULT:-unknown}
+code=${EXIT_STATUS:-1}
+if [ "$result" = success ]; then
+	code=0
+elif ! [[ $code =~ ^[0-9]+$ ]] || [ "$code" -eq 0 ]; then
+	code=1  # killed by a signal or a timeout: no exit code, but still a failure
+fi
+
+if curl -fsS -m 10 --retry 3 -o /dev/null "$url/$code"; then
+	echo "hc-ping: told Healthchecks.io the run ended with $code ($result)" >&2
+else
+	echo "hc-ping: couldn't reach Healthchecks.io" >&2
+fi
