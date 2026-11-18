@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# fix-disk-full: the "bookshop logs disk is full" runbook, as a script.
+#
+#   fix-disk-full                  look, and show what it would do (changes nothing)
+#   fix-disk-full --apply          fix it, after you confirm by typing the server's name
+#   fix-disk-full --apply --yes    fix it without asking (for use by other tools)
+#
+# Exit codes: 0 fixed, or nothing to fix; 1 it tried and the fix didn't work;
+# 2 called wrongly, not confirmed, or refused.
+set -euo pipefail
+
+MOUNT=${MOUNT:-/srv/bookshop-logs}
+APP_LOG=${APP_LOG:-$MOUNT/app.log}
+SERVICE=${SERVICE:-bookshop}
+THRESHOLD=${THRESHOLD:-80}
+INCIDENTS=${INCIDENTS:-/var/lib/incidents}
+RECORD=${RECORD:-/var/log/runbook.log}
+who_ran=${SUDO_USER:-$(id -un)}
+
+say() { printf '%s fix-disk-full: %s\n' "$(date -u +%FT%TZ)" "$*" >&2; }
+usage() { sed -n '4,6p' "$0" | sed -E 's/^# ?//' >&2; exit 2; }
+
+apply=0 yes=0
+for a in "$@"; do
+	case "$a" in
+		--apply) apply=1 ;;
+		--yes) yes=1 ;;
+		*) usage ;;
+	esac
+done
+[ "$(id -u)" -eq 0 ] || { say "run me with sudo"; exit 2; }
+mountpoint -q "$MOUNT" || { say "refusing: $MOUNT isn't a mounted disk; is this the right server?"; exit 2; }
+
+used() { df --output=pcent "$MOUNT" | tail -n 1 | tr -dc '0-9'; }
+# Files that were deleted while a program still had them open: their space
+# isn't freed until the program closes them.
+held_open() { find /proc/[0-9]*/fd -lname "$MOUNT/*(deleted)" 2>/dev/null || true; }
+
+# 1. Look before touching anything.
+before=$(used)
+say "step 1: look"
+df -h "$MOUNT" >&2
+say "the biggest files:"
+du -ah "$MOUNT" 2>/dev/null | sort -rh | head -n 4 | sed 's/^/    /' >&2 || true
+held=$(held_open)
+if [ -n "$held" ]; then
+	say "space held by deleted files that are still open:"
+	while read -r fd; do
+		pid=${fd#/proc/}; pid=${pid%%/*}
+		printf '    %s (%s bytes), held open by process %s (%s)\n' "$(readlink "$fd")" "$(stat -L -c %s "$fd" 2>/dev/null || echo '?')" "$pid" "$(cat "/proc/$pid/comm" 2>/dev/null || echo '?')" >&2
+	done <<<"$held"
+fi
+
+if [ "$before" -lt "$THRESHOLD" ] && [ -z "$held" ]; then
+	say "nothing to fix: $MOUNT is $before% full, under the $THRESHOLD% line"
+	exit 0
+fi
+
+# 2. Say what it's going to do.
+say "step 2: the plan, for $MOUNT at $before% full"
+say "    a. save the last 200 lines of $APP_LOG, for the incident notes"
+say "    b. switch off the app's debug logging"
+say "    c. empty $APP_LOG (truncate it; don't delete it)"
+[ -z "$held" ] || say "    d. restart $SERVICE, so it lets go of deleted files"
+say "    then check: under $THRESHOLD%, $SERVICE running, and still logging"
+if [ "$apply" -eq 0 ]; then
+	say "dry run: nothing was changed. Add --apply to do it."
+	exit 0
+fi
+
+# 3. A person confirms, unless told not to ask.
+if [ "$yes" -eq 0 ]; then
+	if [ ! -t 0 ]; then
+		say "refusing: nobody's here to confirm. Run it in a terminal, or add --yes if a tool is running it on purpose."
+		exit 2
+	fi
+	read -r -p "Type this server's name ($(hostname)) to go ahead: " answer
+	if [ "$answer" != "$(hostname)" ]; then
+		say "not confirmed ('$answer' isn't $(hostname)); nothing was changed"
+		exit 2
+	fi
+fi
+
+# 4. Fix it, one step at a time.
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+notes="$INCIDENTS/$stamp-disk-full"
+install -d -m 700 "$notes"
+say "a. saving the last 200 lines of the log to $notes"
+tail -n 200 "$APP_LOG" >"$notes/app-log-tail.txt" 2>/dev/null || true
+say "b. switching off debug logging"
+systemctl kill --kill-whom=main -s USR2 "$SERVICE"
+if [ -e "$APP_LOG" ]; then
+	say "c. emptying $APP_LOG"
+	truncate -s 0 "$APP_LOG"
+else
+	say "c. $APP_LOG isn't there (deleted?); restarting $SERVICE will start a new one"
+	held=${held:-restart}
+fi
+if [ -n "$held" ]; then
+	say "d. restarting $SERVICE"
+	systemctl restart "$SERVICE"
+fi
+
+# 5. Check it worked: free space, the app running, and new log lines arriving.
+sleep 3
+after=$(used)
+ok=1
+if [ "$after" -ge "$THRESHOLD" ]; then say "CHECK FAILED: $MOUNT is still $after% full"; ok=0; fi
+if ! systemctl is-active --quiet "$SERVICE"; then say "CHECK FAILED: $SERVICE isn't running"; ok=0; fi
+if [ ! -s "$APP_LOG" ]; then say "CHECK FAILED: $SERVICE hasn't written to $APP_LOG since it was emptied"; ok=0; fi
+df -h "$MOUNT" >&2
+
+# 6. Record what happened, for the incident notes and for whoever's next.
+result=$([ "$ok" -eq 1 ] && echo "fixed" || echo "NOT fixed")
+summary="$result: $MOUNT went from $before% to $after% full; run by $who_ran on $(hostname)"
+printf '%s\n' "$summary" >"$notes/summary.txt"
+printf '%s %s\n' "$(date -u +%FT%TZ)" "$summary" >>"$RECORD"
+say "$summary"
+say "notes saved in $notes"
+[ "$ok" -eq 1 ]

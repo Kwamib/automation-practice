@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# bookshop-app: stands in for the bookshop's web app. It writes a log line every
+# second, like a real app logging its requests. Send it USR1 to switch on debug
+# logging, which writes about 10 MB a second; USR2 switches it off again.
+LOG=${LOG:-/srv/bookshop-logs/app.log}
+debug=0
+trap 'debug=1' USR1
+trap 'debug=0' USR2
+exec >>"$LOG"   # open the log once, and keep it open, as real apps do
+while :; do
+	printf '%s INFO GET /books 200 12ms\n' "$(date -u +%FT%TZ)" || echo "bookshop-app: can't write to $LOG" >&2
+	if [ "$debug" -eq 1 ]; then
+		yes "$(date -u +%FT%TZ) DEBUG request headers, cache state, query plan and everything else nobody reads" | head -c 10000000 || true
+	fi
+	sleep 1
+done

@@ -62,3 +62,17 @@ Lesson 4 runs on its own server, `office`, from the `Vagrantfile` in `users/`:
   (`remove`), shows who can get in (`audit`), and makes the server match a
   roster (`sync`). Changes are dry runs unless you add `--apply`.
 - `users/roster.csv` lists who should have access.
+
+Lesson 5 runs on its own server, `bookshop-1`, from the `Vagrantfile` in `runbook/`:
+
+    cd runbook
+    vagrant up          # builds it: runs runbook/setup.sh
+    vagrant ssh
+    vagrant provision   # starts the lab over, with an empty disk
+    vagrant destroy -f  # when you're done
+
+- `runbook/RUNBOOK.md` is the runbook for a full log disk, as it was written
+  (one of its steps is wrong: the lesson finds out which).
+- `runbook/fix-disk-full` is the runbook as a script: it looks first, asks you
+  to type the server's name, fixes it, checks the fix, and keeps a record.
+- `runbook/bookshop-app` stands in for the app; USR1 switches on debug logging.

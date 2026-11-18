@@ -1,0 +1,11 @@
+[Unit]
+Description=The bookshop app (a stand-in that writes a log line every second)
+
+[Service]
+User=bookshop
+Group=bookshop
+ExecStart=/usr/local/bin/bookshop-app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
