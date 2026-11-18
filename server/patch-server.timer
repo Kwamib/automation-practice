@@ -1,0 +1,11 @@
+[Unit]
+Description=Patch the server every Sunday at 03:00 UTC, the maintenance window
+
+[Timer]
+OnCalendar=Sun *-*-* 03:00:00 UTC
+# Many servers on the same timer shouldn't all patch at once.
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

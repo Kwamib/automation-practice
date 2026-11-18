@@ -1,0 +1,14 @@
+[Unit]
+Description=Install updates, restart the bookshop, and check it still works
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Installing updates needs root, so this one runs as root: keep the script small.
+Environment=HC_URL_FILE=/etc/patch-server/ping-url
+ExecStart=/usr/local/bin/patch-server --apply
+# Runs after every run, however it ended, and tells Healthchecks.io how.
+ExecStopPost=/usr/local/bin/hc-ping
+# A run that takes longer than this is killed, and counts as a failure.
+TimeoutStartSec=30min

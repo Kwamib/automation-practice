@@ -18,16 +18,20 @@ first lessons:
   `--apply`, guard rails against the wrong folder, and it always keeps the
   newest 7.
 
-Lesson 2 runs on a small virtual machine, made by
+Lesson 2 runs on a small Ubuntu web server, `web-1`, made by
 [Vagrant](https://developer.hashicorp.com/vagrant) from the `Vagrantfile` here,
 as in the Linux track from its Lesson 7. This folder appears inside it at `/practice`:
 
-    vagrant up          # builds it: runs server/setup.sh
+    vagrant up                              # builds it: runs server/setup.sh
+    vagrant snapshot save before-patch      # a restore point
     vagrant ssh
-    vagrant destroy -f  # when you're done
+    vagrant snapshot restore before-patch   # undo the patching
+    vagrant destroy -f                      # when you're done
 
-- `server/setup.sh` installs `error-report` as a service, run every 5 minutes by
-  a timer, as its own user, and is safe to run again (`vagrant provision`).
+- `server/setup.sh` installs nginx with the bookshop's page, and `patch-server`
+  as a weekly service on a timer. It installs no updates: those are the lesson.
+- `server/patch-server` lists pending updates (a dry run), or with `--apply`
+  installs them, restarts the app and checks it still works.
 - `server/hc-ping` tells Healthchecks.io how each run ended.
 - `.healthchecks-url` is where your check's ping URL goes. It's a secret: it's
   in `.gitignore`, and nothing here prints it.

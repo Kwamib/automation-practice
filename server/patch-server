@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# patch-server: install pending updates, restart the app, and check it still works.
+#
+#   patch-server            show what would be updated, and change nothing
+#   patch-server --apply    update, restart the app, then check it
+#   patch-server --check    only check the app
+#
+# Exit codes: 0 done and the app is healthy, 1 an update failed or the app is
+# down afterwards, 2 called wrongly.
+set -euo pipefail
+
+APP_SERVICE=${APP_SERVICE:-nginx}
+HEALTH_URL=${HEALTH_URL:-http://127.0.0.1/}
+HEALTH_TEXT=${HEALTH_TEXT:-bookshop is up}
+LOCK=${LOCK:-/run/lock/patch-server.lock}
+LOG_DIR=${LOG_DIR:-/var/log/patch-server}
+
+log() { printf '%s patch-server: %s\n' "$(date -u +%FT%TZ)" "$*" >&2; }
+usage() { echo "usage: patch-server [--apply | --check]" >&2; exit 2; }
+
+mode=dry
+case "${1:-}" in
+	"") ;;
+	--apply) mode=apply ;;
+	--check) mode=check ;;
+	*) usage ;;
+esac
+[ $# -le 1 ] || usage
+[ "$(id -u)" -eq 0 ] || { log "run me as root (sudo): installing updates needs it"; exit 2; }
+
+# One run at a time.
+exec 9>"$LOCK"
+if ! flock -n 9; then
+	log "another run is still going; skipping this one"
+	exit 0
+fi
+
+# Is the app answering, with the page it should? Five tries, two seconds apart,
+# because a service that's just been restarted can take a moment.
+health() {
+	local try
+	for try in 1 2 3 4 5; do
+		if curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null | grep -qF "$HEALTH_TEXT"; then
+			log "health check passed: $HEALTH_URL answers '$HEALTH_TEXT'"
+			return 0
+		fi
+		sleep 2
+	done
+	log "health check FAILED: $HEALTH_URL didn't answer '$HEALTH_TEXT' after 5 tries"
+	return 1
+}
+
+if [ "$mode" = check ]; then
+	health && exit 0 || exit 1
+fi
+
+# apt, with no questions asked: wait up to 5 minutes if another apt (like the
+# automatic updates) is running, keep our own config files when a package ships
+# a new one, and let needrestart restart services without asking.
+apt_opts=(-o DPkg::Lock::Timeout=300 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold)
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
+
+log "refreshing the package lists"
+apt-get "${apt_opts[@]}" -qq update
+
+# One line per pending update: "name/suites version arch [upgradable from: old]".
+mapfile -t pending < <(apt list --upgradable 2>/dev/null | grep -F '[upgradable from:' || true)
+mapfile -t held < <(apt-mark showhold)
+security=0
+for p in "${pending[@]}"; do
+	case "$p" in *-security*) security=$((security + 1)) ;; esac
+done
+log "${#pending[@]} updates pending, $security of them security fixes"
+[ "${#held[@]}" -eq 0 ] || log "held back on purpose: ${held[*]}"
+
+if [ "$mode" = dry ]; then
+	for p in "${pending[@]}"; do
+		name=${p%%/*}
+		read -r _ new _ <<<"$p"
+		old=${p##*from: }; old=${old%]}
+		note=""
+		for h in "${held[@]}"; do [ "$h" = "$name" ] && note=" (held: won't be updated)"; done
+		log "would update $name $old -> $new$note"
+	done
+	log "dry run: nothing was changed. Add --apply to update."
+	exit 0
+fi
+
+mkdir -p "$LOG_DIR"
+apt_log="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ).log"
+status=0
+if [ "${#pending[@]}" -eq 0 ]; then
+	log "nothing to update"
+else
+	log "updating; apt's full output goes to $apt_log"
+	if apt-get "${apt_opts[@]}" -y --with-new-pkgs upgrade >"$apt_log" 2>&1; then
+		log "updated $(grep -c '^Setting up' "$apt_log" || true) packages"
+	else
+		log "the update FAILED; see $apt_log"
+		status=1
+	fi
+fi
+
+# Restart the app even if nothing in it changed: if an update (or anything
+# else) has broken it, find out now, in the maintenance window, not at the
+# next reboot.
+log "restarting $APP_SERVICE, so a problem shows now and not at the next reboot"
+systemctl restart "$APP_SERVICE" || log "$APP_SERVICE didn't restart; see: journalctl -u $APP_SERVICE"
+health || status=1
+
+if [ -f /run/reboot-required ]; then
+	log "a reboot is needed to finish, for: $(sort -u /run/reboot-required.pkgs 2>/dev/null | tr '\n' ' ')"
+fi
+exit "$status"

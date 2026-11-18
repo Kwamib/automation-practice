@@ -1,10 +1,12 @@
-# Lesson 2's server: a small Ubuntu VM with this folder inside it at /practice.
-#   vagrant up        build it (runs server/setup.sh)
-#   vagrant ssh       log in
-#   vagrant destroy   delete it
+# Lesson 2's server: a small Ubuntu web server with this folder inside it at /practice.
+#   vagrant up                            build it (runs server/setup.sh)
+#   vagrant ssh                           log in
+#   vagrant snapshot save before-patch    a restore point
+#   vagrant snapshot restore before-patch go back to it
+#   vagrant destroy -f                    delete it
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-24.04"
-  config.vm.hostname = "reports"
+  config.vm.hostname = "web-1"
   config.vm.synced_folder ".", "/practice"
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.provision "shell", path: "server/setup.sh"
