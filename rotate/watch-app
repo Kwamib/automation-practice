@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# watch-app: ask the bookshop app for its book count 5 times a second, for a
+# while, and report every request that failed.
+#   watch-app SECONDS
+set -uo pipefail
+secs=${1:?usage: watch-app SECONDS}
+end=$(( $(date +%s) + secs ))
+total=0 failed=0
+while [ "$(date +%s)" -lt "$end" ]; do
+	code=$(curl -s -o /dev/null -m 2 -w '%{http_code}' http://127.0.0.1:8080/books)
+	total=$((total + 1))
+	if [ "$code" != 200 ]; then
+		failed=$((failed + 1))
+		echo "$(date -u +%T) FAILED: status $code"
+	fi
+	sleep 0.2
+done
+echo "watch-app: $total requests over ${secs}s, $failed failed"

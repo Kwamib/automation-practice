@@ -1,0 +1,15 @@
+[Unit]
+Description=The bookshop app (a stand-in, on port 8080)
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=bookshop
+Group=bookshop
+ExecStart=/usr/local/bin/bookshop-app
+# A reload sends SIGHUP: the app reads its database login again, without stopping.
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
